@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db_security_monitor:
+    build: ./database
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: security_logs
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - monitor_network
+
+  logs_collector:
+    build: ./logs_collector
+    environment:
+      DB_HOST: db_security_monitor
+      DB_PORT: 5432
+    depends_on:
+      db_security_monitor:
+        condition: service_healthy
+    networks:
+      - monitor_network
+
+  rules_manager:
+    build: ./rules_manager
+    environment:
+      DB_HOST: db_security_monitor
+      DB_PORT: 5432
+    depends_on:
+      db_security_monitor:
+        condition: service_healthy
+    networks:
+      - monitor_network
+
+  nginx:
+    build: ./nginx
+    ports:
+      - "8080:80"
+    networks:
+      - monitor_network
+
+  snmp_exporter:
+    build: ./snmp_exporter
+    image: myproject/snmp_exporter:latest
+    networks:
+      - monitor_network
+
+volumes:
+  db_data:
+
+networks:
+  monitor_network:
+    driver: bridge

@@ -1,0 +1,7 @@
+modules:
+  switches:
+    walk:
+      - 1.3.6.1.2.1.2  # Базовые интерфейсы
+    version: 2c
+    auth:
+      community: public
