@@ -10,25 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo systemctl enable --now docker
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+      with:
+        version: latest
 
-      - name: Install Docker Compose
-        run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r .tag_name)/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
 
-      - name: Clean up old resources
-        run: |
-          docker-compose down --volumes --remove-orphans
-          docker container prune -f
-          docker volume prune -f
+    - name: Clean up old resources
+      run: |
+        docker-compose down --volumes --remove-orphans
+        docker container prune -f
+        docker volume prune -f
 
-      - name: Build and deploy
-        run: docker-compose up -d --build
+    - name: Build and deploy
+      run: |
+        docker-compose up -d --build
+        echo "Active containers:"
+        docker ps
